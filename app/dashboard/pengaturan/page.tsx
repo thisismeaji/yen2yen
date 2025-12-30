@@ -1,7 +1,6 @@
 import { PengaturanAkun } from "@/components/pengaturan/pengaturan-akun"
 import { PengaturanPreferensi } from "@/components/pengaturan/pengaturan-preferensi"
 import { PengaturanKeamanan } from "@/components/pengaturan/pengaturan-keamanan"
-import { PengaturanDanger } from "@/components/pengaturan/pengaturan-danger"
 import { CreateAccount } from "@/components/pengaturan/create-account"
 
 export default function PengaturanPage() {
@@ -20,8 +19,6 @@ export default function PengaturanPage() {
         <PengaturanKeamanan />
         <CreateAccount />
       </div>
-
-      <PengaturanDanger />
     </div>
   )
 }
