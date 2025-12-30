@@ -1,4 +1,3 @@
-import { PengaturanKlinik } from "@/components/pengaturan/pengaturan-klinik"
 import { PengaturanAkun } from "@/components/pengaturan/pengaturan-akun"
 import { PengaturanPreferensi } from "@/components/pengaturan/pengaturan-preferensi"
 import { PengaturanKeamanan } from "@/components/pengaturan/pengaturan-keamanan"
@@ -16,7 +15,6 @@ export default function PengaturanPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <PengaturanKlinik />
         <PengaturanAkun />
         <PengaturanPreferensi />
         <PengaturanKeamanan />
