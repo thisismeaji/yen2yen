@@ -34,18 +34,16 @@ export async function POST(req: Request) {
       )
     }
 
-    // ✅ buat token
     const token = signToken({
-      id: user._id,
+      id: user._id.toString(),
       email: user.email,
       role: user.role,
     })
 
-    // ✅ set cookie (httpOnly)
     const response = NextResponse.json({
       message: "Login berhasil",
       user: {
-        id: user._id,
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role,
