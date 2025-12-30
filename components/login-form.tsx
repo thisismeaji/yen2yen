@@ -14,17 +14,15 @@ import {
 } from "@/components/ui/card"
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+import { toast, Toaster } from "sonner" // ✅ import Sonner
+
+export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const router = useRouter()
 
   const [email, setEmail] = useState("")
@@ -47,17 +45,22 @@ export function LoginForm({
       const data = await res.json()
 
       if (!res.ok) {
+        toast.error(data.message || "Login gagal") // ❌ error toast
         setError(data.message || "Login gagal")
         setLoading(false)
         return
       }
 
       // ✅ Login sukses
-      console.log("LOGIN SUCCESS:", data)
+      toast.success(`Selamat datang kembali, ${data.user.name}!`, {
+        description: "Anda berhasil login",
+        duration: 3000,
+      })
 
-      // redirect ke dashboard
-      router.push("/dashboard")
+      // redirect ke dashboard setelah 1 detik agar user sempat melihat toast
+      setTimeout(() => router.push("/dashboard"), 1000)
     } catch (err) {
+      toast.error("Terjadi kesalahan server")
       setError("Terjadi kesalahan server")
     } finally {
       setLoading(false)
@@ -66,6 +69,9 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {/* Tambahkan Toaster Sonner di root atau layout */}
+      <Toaster richColors position="top-right" />
+
       <Card>
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>

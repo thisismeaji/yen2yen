@@ -6,17 +6,19 @@ import { User } from "@/models/User"
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role } = await req.json()
+    const { name, email, password, whatsapp } = await req.json()
 
-    if (!name || !email || !password) {
+    // 🔒 validasi
+    if (!name || !email || !password || !whatsapp) {
       return NextResponse.json(
-        { message: "Data tidak lengkap" },
+        { message: "Semua data wajib diisi" },
         { status: 400 }
       )
     }
 
     await connectDB()
 
+    // cek email
     const existingUser = await User.findOne({ email })
     if (existingUser) {
       return NextResponse.json(
@@ -31,7 +33,7 @@ export async function POST(req: Request) {
       name,
       email,
       password: hashedPassword,
-      role: role?.toLowerCase() || "staff",
+      whatsapp,
     })
 
     return NextResponse.json(
@@ -39,7 +41,7 @@ export async function POST(req: Request) {
       { status: 201 }
     )
   } catch (error) {
-    console.error(error)
+    console.error("CREATE ACCOUNT ERROR:", error)
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 }

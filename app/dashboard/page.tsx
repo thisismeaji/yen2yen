@@ -1,57 +1,69 @@
-import { CalendarDays, Users, Wallet } from "lucide-react"
-import { StatCard } from "@/components/overview/stat-card"
-import { TodaySchedule } from "@/components/overview/today-schedule"
-import { RecentActivity } from "@/components/overview/recent-activity"
+"use client"
 
-export default async function DashboardPage() {
-  // ⬇️ nanti bisa diganti fetch dari DB / API
-  const stats = {
-    bookingToday: 12,
-    activePatients: 58,
-    revenueToday: "Rp 3.500.000",
+import { useEffect, useState } from "react"
+import { toast, Toaster } from "sonner"
+import { BookingStats } from "@/components/booking/booking-stats"
+import { Booking, PaymentStatus } from "@/components/booking/types"
+
+export default function BookingPage() {
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+
+  /* ================= FETCH BOOKINGS ================= */
+  const fetchBookings = async () => {
+    try {
+      const res = await fetch("/api/booking")
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+
+      const mapped: Booking[] = data.map((item: any) => ({
+        id: item._id,
+        patient: item.name,
+        phone: item.phone,
+        email: item.email,
+        location: item.location,
+        therapist: item.therapist,
+        datetime: `${item.date}T${item.time}`,
+        description: item.notes || "-",
+        paymentStatus: item.paymentStatus || "Belum Lunas",
+      }))
+
+      setBookings(mapped)
+    } catch {
+      toast.error("Gagal memuat data booking")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchBookings()
+  }, [])
+
+  /* ================= COUNTS ================= */
+  const counts = {
+    all: bookings.length,
+    Lunas: bookings.filter(b => b.paymentStatus === "Lunas").length,
+    "Belum Lunas": bookings.filter(b => b.paymentStatus === "Belum Lunas").length,
+    DP: bookings.filter(b => b.paymentStatus === "DP").length,
   }
 
   return (
     <div className="flex flex-col gap-6">
-      {/* ===== Header ===== */}
-      <div>
-        <h1 className="text-2xl font-semibold">
-          Dashboard
-        </h1>
+      <Toaster richColors position="top-right" />
+
+      {loading ? (
         <p className="text-sm text-muted-foreground">
-          Ringkasan aktivitas wellness therapy hari ini
+          Memuat data booking...
         </p>
-      </div>
-
-      {/* ===== Stats ===== */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          title="Booking Hari Ini"
-          value={stats.bookingToday.toString()}
-          description="+3 dibanding kemarin"
-          icon={CalendarDays}
+      ) : (
+        <BookingStats
+          totalToday={bookings.length}
+          pending={counts["Belum Lunas"]}
+          completed={counts.Lunas}
+          cancelled={0}
         />
-        <StatCard
-          title="Pasien Aktif"
-          value={stats.activePatients.toString()}
-          description="Bulan berjalan"
-          icon={Users}
-        />
-        <StatCard
-          title="Pendapatan Hari Ini"
-          value={stats.revenueToday}
-          description="10 transaksi"
-          icon={Wallet}
-        />
-      </div>
-
-      {/* ===== Content Grid ===== */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <TodaySchedule />
-        </div>
-        <RecentActivity />
-      </div>
+      )}
     </div>
   )
 }

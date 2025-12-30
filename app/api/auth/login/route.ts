@@ -26,18 +26,18 @@ export async function POST(req: Request) {
       )
     }
 
-    const isValid = await bcrypt.compare(password, user.password)
-    if (!isValid) {
+    const isValidPassword = await bcrypt.compare(password, user.password)
+    if (!isValidPassword) {
       return NextResponse.json(
         { message: "Email atau password salah" },
         { status: 401 }
       )
     }
 
+    // ✅ JWT TANPA ROLE
     const token = signToken({
       id: user._id.toString(),
       email: user.email,
-      role: user.role,
     })
 
     const response = NextResponse.json({
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
-        role: user.role,
+        whatsapp: user.whatsapp,
       },
     })
 
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
     return response
   } catch (error) {
-    console.error(error)
+    console.error("LOGIN ERROR:", error)
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 }

@@ -114,7 +114,7 @@ export function AppSidebar(
           {/* Pengaturan */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="/dashboard/pengaturan" className="flex gap-2">
+              <Link href="/dashboard/settings" className="flex gap-2">
                 <Settings className="size-4" />
                 <span>Pengaturan</span>
               </Link>

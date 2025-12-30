@@ -1,7 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { bookings as rawBookings } from "@/components/booking/data"
+import { useEffect, useMemo, useState } from "react"
 import { Booking, PaymentStatus } from "@/components/booking/types"
 
 import { BookingStats } from "@/components/booking/booking-stats"
@@ -11,10 +10,11 @@ import { BookingDetailSheet } from "@/components/booking/booking-detail-sheet"
 import { BookingCreateSheet } from "@/components/booking/booking-create-sheet"
 import { BookingRescheduleSheet } from "@/components/booking/booking-reschedule-sheet"
 import { BookingCancelDialog } from "@/components/booking/booking-cancel-dialog"
+import { toast, Toaster } from "sonner"
 
 export default function BookingPage() {
-  const [status, setStatus] = useState<PaymentStatus | "all">("all")
   const [search, setSearch] = useState("")
+  const [status, setStatus] = useState<PaymentStatus | "all">("all")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [sortBy, setSortBy] = useState<"date" | "time" | "id">("date")
 
@@ -23,14 +23,50 @@ export default function BookingPage() {
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
 
-  const [bookings, setBookings] = useState<Booking[]>(rawBookings)
+  const [bookings, setBookings] = useState<Booking[]>([])
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null)
+  const [loading, setLoading] = useState(true)
 
+  /* ================= FETCH DATA ================= */
+  const fetchBookings = async () => {
+    try {
+      const res = await fetch("/api/booking")
+      if (!res.ok) throw new Error()
+
+      const data = await res.json()
+
+      const mapped: Booking[] = data.map((item: any) => ({
+        id: item._id,
+        patient: item.name,
+        phone: item.phone,
+        email: item.email,
+        location: item.location,
+        therapist: item.therapist,
+        datetime: `${item.date}T${item.time}`,
+        paymentStatus: item.paymentStatus || "Belum Lunas",
+        description: item.notes || "-",
+      }))
+
+      setBookings(mapped)
+    } catch {
+      toast.error("Gagal memuat data booking")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchBookings()
+  }, [])
+
+  /* ================= FILTER + SORT ================= */
   const filteredBookings = useMemo(() => {
     return bookings
-      .filter(b => status === "all" || b.paymentStatus === status)
-      .filter(b => b.patient.toLowerCase().includes(search.toLowerCase()))
+      .filter(b =>
+        (status === "all" || b.paymentStatus === status) &&
+        b.patient.toLowerCase().includes(search.toLowerCase())
+      )
       .sort((a, b) => {
         let valA: number
         let valB: number
@@ -39,8 +75,12 @@ export default function BookingPage() {
           valA = new Date(a.datetime).getTime()
           valB = new Date(b.datetime).getTime()
         } else if (sortBy === "time") {
-          valA = new Date(a.datetime).getHours() * 60 + new Date(a.datetime).getMinutes()
-          valB = new Date(b.datetime).getHours() * 60 + new Date(b.datetime).getMinutes()
+          valA =
+            new Date(a.datetime).getHours() * 60 +
+            new Date(a.datetime).getMinutes()
+          valB =
+            new Date(b.datetime).getHours() * 60 +
+            new Date(b.datetime).getMinutes()
         } else {
           valA = parseInt(a.id)
           valB = parseInt(b.id)
@@ -50,6 +90,7 @@ export default function BookingPage() {
       })
   }, [bookings, status, search, sortOrder, sortBy])
 
+  /* ================= STATS ================= */
   const counts = useMemo(() => ({
     all: bookings.length,
     Lunas: bookings.filter(b => b.paymentStatus === "Lunas").length,
@@ -57,8 +98,11 @@ export default function BookingPage() {
     DP: bookings.filter(b => b.paymentStatus === "DP").length,
   }), [bookings])
 
-  const handleReschedule = (updatedBooking: Booking) => {
-    setBookings(prev => prev.map(b => b.id === updatedBooking.id ? updatedBooking : b))
+  /* ================= ACTIONS ================= */
+  const handleReschedule = (updated: Booking) => {
+    setBookings(prev =>
+      prev.map(b => (b.id === updated.id ? updated : b))
+    )
   }
 
   const handleCancel = (booking: Booking) => {
@@ -73,29 +117,42 @@ export default function BookingPage() {
     setBookingToCancel(null)
   }
 
+  /* ================= RENDER ================= */
   return (
     <div className="flex flex-col gap-6">
-      <BookingStats />
+      <Toaster richColors position="top-right" />
 
       <BookingFilters
         status={status}
-        search={search}
         onStatusChange={setStatus}
+        counts={counts}
+        search={search}
         onSearchChange={setSearch}
         onAddPatient={() => setCreateOpen(true)}
-        counts={counts}
         sortBy={sortBy}
         sortOrder={sortOrder}
         onSortByChange={setSortBy}
         onSortOrderChange={setSortOrder}
       />
 
-      <BookingTable
-        bookings={filteredBookings}
-        onViewDetail={(b) => { setSelectedBooking(b); setDetailOpen(true) }}
-        onReschedule={(b) => { setSelectedBooking(b); setRescheduleOpen(true) }}
-        onCancel={handleCancel}
-      />
+      {loading ? (
+        <p className="text-sm text-muted-foreground">
+          Memuat data booking...
+        </p>
+      ) : (
+        <BookingTable
+          bookings={filteredBookings}
+          onViewDetail={(b) => {
+            setSelectedBooking(b)
+            setDetailOpen(true)
+          }}
+          onReschedule={(b) => {
+            setSelectedBooking(b)
+            setRescheduleOpen(true)
+          }}
+          onCancel={handleCancel}
+        />
+      )}
 
       <BookingDetailSheet
         open={detailOpen}
@@ -106,6 +163,7 @@ export default function BookingPage() {
       <BookingCreateSheet
         open={createOpen}
         onOpenChange={setCreateOpen}
+        onCreated={fetchBookings}
       />
 
       <BookingRescheduleSheet

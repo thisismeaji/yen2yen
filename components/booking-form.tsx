@@ -1,161 +1,208 @@
 "use client"
 
 import * as React from "react"
+import { toast, Toaster } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
+import { Calendar, Clock, User, Phone, Mail, MapPin } from "lucide-react"
 
 export function BookingForm() {
-    const [loading, setLoading] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
 
-    function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault()
-        setLoading(true)
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
 
-        const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    setLoading(true)
 
-        const data = Object.fromEntries(formData.entries())
-        console.log("Booking Data:", data)
+    const formData = new FormData(form)
 
-        // simulasi submit
-        setTimeout(() => {
-            setLoading(false)
-            alert("Booking berhasil dikirim")
-        }, 1000)
+    const payload = {
+      name: formData.get("nama"),
+      phone: formData.get("no_hp"),
+      email: formData.get("email"),
+      location: formData.get("lokasi"),
+      therapist: formData.get("terapis"),
+      date: formData.get("tanggal"),
+      time: formData.get("jam"),
+      notes: formData.get("deskripsi"),
     }
 
-    return (
-        <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-                <CardTitle>Form Booking Terapi</CardTitle>
-            </CardHeader>
+    try {
+      const res = await fetch("/api/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
 
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Nama */}
-                    <div className="space-y-2">
-                        <Label>Nama</Label>
-                        <Input name="nama" placeholder="Nama lengkap" required />
-                    </div>
+      const data = await res.json()
 
-                    {/* No HP */}
-                    <div className="space-y-2">
-                        <Label>No HP</Label>
-                        <Input
-                            name="no_hp"
-                            placeholder="08xxxxxxxxxx"
-                            required
-                        />
-                    </div>
+      if (!res.ok) {
+        toast.error(data.message || "Gagal mengirim booking")
+        return
+      }
 
-                    {/* Email */}
-                    <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input
-                            type="email"
-                            name="email"
-                            placeholder="email@example.com"
-                            required
-                        />
-                    </div>
+      toast.success("Booking berhasil dikirim 🎉")
+      form.reset()
+    } catch (error) {
+      console.error(error)
+      toast.error("Terjadi kesalahan server")
+    } finally {
+      setLoading(false)
+    }
+  }
 
-                    {/* Lokasi */}
-                    <div className="space-y-2 w-full">
-                        <Label>Lokasi</Label>
-                        <Select name="lokasi" required>
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Pilih lokasi" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="rumah">Rumah Pasien</SelectItem>
-                                <SelectItem value="klinik">Klinik</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+  return (
+    <Card className="mx-auto max-w-3xl rounded-2xl shadow-sm">
+      <Toaster richColors position="top-right" />
 
-                    {/* Terapis */}
-                    <div className="space-y-2 w-full">
-                        <Label>Terapis</Label>
-                        <Select name="terapis" required>
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Pilih terapis" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="terapis-a">Terapis A</SelectItem>
-                                <SelectItem value="terapis-b">Terapis B</SelectItem>
-                                <SelectItem value="terapis-c">Terapis C</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+      <CardHeader className="space-y-1 text-center">
+        <CardTitle className="text-2xl">Booking Terapi</CardTitle>
+        <CardDescription>
+          Lengkapi data di bawah untuk menjadwalkan sesi terapi Anda
+        </CardDescription>
+      </CardHeader>
 
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Informasi Pasien */}
+          <section className="space-y-5">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase">
+              Informasi Pasien
+            </h3>
 
-                    {/* Tanggal */}
-                    <div className="space-y-2">
-                        <Label>Tanggal</Label>
-                        <Input type="date" name="tanggal" required />
-                    </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Nama Lengkap</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    name="nama"
+                    placeholder="Nama lengkap"
+                    className="pl-9"
+                    required
+                  />
+                </div>
+              </div>
 
-                    {/* Jam */}
-                    <div className="space-y-2">
-                        <Label>Jam</Label>
-                        <Input type="time" name="jam" required />
-                    </div>
+              <div className="space-y-2">
+                <Label>No HP</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    name="no_hp"
+                    placeholder="08xxxxxxxxxx"
+                    className="pl-9"
+                    required
+                  />
+                </div>
+              </div>
 
-                    {/* Informasi Pembayaran */}
-                    <div className="rounded-lg border bg-muted p-4 space-y-2">
-                        <p className="font-semibold">Informasi Pembayaran</p>
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    name="email"
+                    placeholder="email@example.com"
+                    className="pl-9"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
 
-                        <div className="text-sm text-muted-foreground space-y-1">
-                            <p>
-                                <span className="font-medium text-foreground">Bank:</span> BCA
-                            </p>
-                            <p>
-                                <span className="font-medium text-foreground">No. Rekening:</span> 1234567890
-                            </p>
-                            <p>
-                                <span className="font-medium text-foreground">Atas Nama:</span> PT Wellness Sejahtera
-                            </p>
-                            <p>
-                                <span className="font-medium text-foreground">Nominal:</span> Rp 250.000
-                            </p>
-                        </div>
+          {/* Detail Sesi */}
+          <section className="space-y-5">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase">
+              Detail Sesi
+            </h3>
 
-                        <p className="text-xs text-muted-foreground">
-                            Silakan lakukan pembayaran terlebih dahulu, kemudian upload bukti pembayaran di bawah.
-                        </p>
-                    </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Lokasi</Label>
+                <Select name="lokasi" required>
+                  <SelectTrigger className="w-full">
+                    <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Pilih lokasi" />
+                  </SelectTrigger>
+                  <SelectContent className="w-full">
+                    <SelectItem value="rumah">Rumah Pasien</SelectItem>
+                    <SelectItem value="klinik">Klinik</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label>Terapis</Label>
+                <Select name="terapis" required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pilih terapis" />
+                  </SelectTrigger>
+                  <SelectContent className="w-full">
+                    <SelectItem value="terapis-a">Terapis A</SelectItem>
+                    <SelectItem value="terapis-b">Terapis B</SelectItem>
+                    <SelectItem value="terapis-c">Terapis C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                    {/* Bukti Pembayaran */}
-                    <div className="space-y-2">
-                        <Label>Bukti Pembayaran</Label>
-                        <Input type="file" name="bukti_pembayaran" required />
-                    </div>
+              <div className="space-y-2">
+                <Label>Tanggal</Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input type="date" name="tanggal" className="pl-9" required />
+                </div>
+              </div>
 
-                    {/* Deskripsi */}
-                    <div className="space-y-2">
-                        <Label>Deskripsi / Keluhan (Opsional)</Label>
-                        <Textarea
-                            name="deskripsi"
-                            placeholder="Tuliskan keluhan atau catatan tambahan"
-                        />
-                    </div>
+              <div className="space-y-2">
+                <Label>Jam</Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input type="time" name="jam" className="pl-9" required />
+                </div>
+              </div>
+            </div>
+          </section>
 
-                    {/* Submit */}
-                    <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? "Mengirim..." : "Booking Sekarang"}
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
-    )
+          {/* Catatan */}
+          <section className="space-y-2">
+            <Label>Keluhan / Catatan Tambahan (Opsional)</Label>
+            <Textarea
+              name="deskripsi"
+              placeholder="Tuliskan keluhan atau catatan tambahan"
+              className="min-h-[120px]"
+            />
+          </section>
+
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full rounded-xl"
+            disabled={loading}
+          >
+            {loading ? "Mengirim Booking..." : "Booking Sekarang"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
 }

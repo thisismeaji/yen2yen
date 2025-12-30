@@ -1,27 +1,51 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { verifyToken, JwtPayload } from "@/lib/jwt"
+import { verifyToken } from "@/lib/jwt"
+import { connectDB } from "@/lib/mongodb"
+import { User } from "@/models/User"
 
-/**
- * Helper reusable untuk protected API
- */
-export async function getAuthUser(): Promise<JwtPayload> {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("auth_token")?.value
-
-  if (!token) throw new Error("Unauthorized")
-
-  return verifyToken(token)
-}
-
-/**
- * GET /api/auth/me
- */
 export async function GET() {
   try {
-    const user = await getAuthUser()
-    return NextResponse.json({ user })
+    // ✅ cookies() HARUS di-await
+    const cookieStore = await cookies()
+    const token = cookieStore.get("auth_token")?.value
+
+    if (!token) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    const payload = verifyToken(token)
+
+    await connectDB()
+
+    const user = await User.findById(payload.id).select(
+      "name email whatsapp"
+    )
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "User tidak ditemukan" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        whatsapp: user.whatsapp,
+      },
+    })
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    console.error("AUTH_ME_ERROR:", error)
+
+    return NextResponse.json(
+      { message: "Unauthorized" },
+      { status: 401 }
+    )
   }
 }

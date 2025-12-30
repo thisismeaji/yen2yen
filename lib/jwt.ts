@@ -1,32 +1,22 @@
 import jwt from "jsonwebtoken"
 
-const JWT_SECRET = process.env.JWT_SECRET
-if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined")
+const JWT_SECRET = process.env.JWT_SECRET as string
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET belum diset di environment variable")
+}
 
 export interface JwtPayload {
   id: string
   email: string
-  role: string
 }
 
-/**
- * Generate JWT token
- */
-export function signToken(payload: JwtPayload): string {
-  // ✅ type assertion untuk memastikan string
-  return jwt.sign(payload, JWT_SECRET as string, {
+export function signToken(payload: JwtPayload) {
+  return jwt.sign(payload, JWT_SECRET, {
     expiresIn: "7d",
-    algorithm: "HS256",
   })
 }
 
-/**
- * Verify & decode JWT token
- */
 export function verifyToken(token: string): JwtPayload {
-  try {
-    return jwt.verify(token, JWT_SECRET as string) as JwtPayload
-  } catch (error) {
-    throw new Error("Invalid or expired token")
-  }
+  return jwt.verify(token, JWT_SECRET) as JwtPayload
 }

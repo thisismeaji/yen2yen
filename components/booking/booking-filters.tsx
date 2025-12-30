@@ -17,7 +17,6 @@ interface BookingFiltersProps {
     all: number
     Lunas: number
     "Belum Lunas": number
-    DP: number
   }
   sortBy: "date" | "time" | "id"
   sortOrder: "asc" | "desc"
@@ -51,7 +50,6 @@ export function BookingFilters({
             <TabsTrigger value="Belum Lunas">
               Belum Lunas ({counts["Belum Lunas"]})
             </TabsTrigger>
-            <TabsTrigger value="DP">DP ({counts.DP})</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -73,7 +71,7 @@ export function BookingFilters({
         />
         <Button size="sm" onClick={onAddPatient}>
           <Plus className="mr-2 h-4 w-4" />
-          Tambah Pasien
+          Tambah Booking
         </Button>
       </div>
     </div>
