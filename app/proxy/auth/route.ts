@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-export function middleware(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const token = req.cookies.get("auth_token")?.value
 
   if (!token) {
@@ -9,8 +9,4 @@ export function middleware(req: NextRequest) {
   }
 
   return NextResponse.next()
-}
-
-export const config = {
-  matcher: ["/dashboard/:path*"],
 }
